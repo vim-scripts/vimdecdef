@@ -1,0 +1,92 @@
+*vimdecdef.txt* Switch between C++ declarations and definitions
+
+                                  vimdecdef
+                                 Eddie Carle
+                              eddie@erctech.org
+
+INTRODUCTION
+
+vimdecdef is a simple vim script that facilitates transitioning between
+declarations and definitions in C++. The script can take a declaration and
+either find it's definition or create one if it doens't exist. The definitions
+will take into account scope and template. All script actions will utilize one
+of two files. The header file and the source file. Initilially one should
+always load a header file. If for example one executed ':e include/file.hpp'
+then the script will automatically assume that the source file is located at
+src/file.cpp. The script has a single bindable command that preforms the
+following functions based on it's situation:
+
+ * If the cursor is on a normal function activating the script will search the
+   source file for it's definition. If the definition does not exist, it will
+   append one at the bottom of the source file and leave the cursor there.
+ * If the cursor is on an inline or template function activating the script will
+   search the source file for it's definition. If it is found in the source
+   file, the cursor will be positioned there. If the definition is not found in
+   the source file the script will try to find it in the header file. If it is
+   found in the header file, the cursor will be positioned there. If it is not
+   found, one will be appended to the bottom of the header file insuring that it
+   stays within any closing #endif that may exist.
+ * If the cursor is on a global object or static data member the script will
+   search the source file for it's definition. If the definition does not exist,
+   it will append one at the bottom of the source file and leave the cursor
+   there.
+ * If the script's last action ended in a definition in the header file,
+   activating it again will move the cursor back to the original declaration
+   that caused the previous move regardless of the cursors current position.
+ * Activating the script at any point in the header file that doesn't fall under
+   any of the above circumstances will result in switching to the source file at
+   it's last cursor position.
+ * Activating the script while in the source file will always result in
+   switching back to the header file at it's last cursor position.
+
+USAGE
+
+First copy vimdecdef.vim into your ~/.vim/ftplugin/cpp directory. You may want
+to enable hidden (:set hidden) while using the script as it tends to work in a
+prettier way. You will want to set up a map for the command. I like having it
+bound to <F7> so to accomplish that it's a simple matter of:
+
+map <silent> <F7> <Plug>vimdecdef
+
+With everything setup we can get started. Note all paths are relative. Say we
+have a header file located at include/somelibrary/file.hpp. Our first step
+will be to load it into vim. Always load the header file first.
+
+vim include/somelibrary/file.hpp
+
+Now the script will assume the source file is located at src/file.cpp. Simple
+press <F7> at a blank line and the source file will be loaded. Press it again
+and you will switch back to the header file. Hit <F7> at a declaration, and
+special things discussed above will happen.
+
+There are two customizable options: source file prefix and source file
+extension. The default definitions follow.
+
+let g:vimdecdefSourceExtension = "cpp"
+let g:vimdecdefSourcePrefix = "src/"
+
+LIMITATIONS
+
+Obviously this script is not without it's limitations. Here are a few that have
+been noticed. Feel free to contact me with others you may notice. Or better yet,
+fix them!
+
+ * Unable to determine the scope identifier for return types and object types.
+   I would really like a solution, but it escapes me. When the script generates
+   a definition for you, you must edit the type/return type manually.
+ * Declarations MUST be not be split up into multiple lines in your code. This
+   means that class declarations must have the class and template part on the
+   same line. Function declarations must have all template stuff, return type,
+   arguments, modifiers, etc all on the same line.
+ * You must use the "bracket on it's own line" style. Meaning
+   
+   class someClass
+   {
+
+   };
+
+   works, but not
+
+   class someClass {
+
+   };
